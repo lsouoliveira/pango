@@ -1,15 +1,13 @@
 import cv2
 
-from pango.puzzle_finder import PuzzleFinder
+from pango.puzzle_image_solver import PuzzleImageSolverPipeline
 
 if __name__ == "__main__":
-    image = cv2.imread("data/sample.jpg")
+    solver = PuzzleImageSolverPipeline.load_image("data/sample.jpg")
+    solver.run()
 
-    if image is None:
-        raise ValueError("Image not found or unable to load.")
+    if solver.output_image is None:
+        raise ValueError("No output image available.")
 
-    puzzle_finder = PuzzleFinder(image)
-    puzzle_image = puzzle_finder.find()
-
-    cv2.imshow("Puzzle Image", puzzle_image)
+    cv2.imshow("Puzzle Image", solver.output_image)
     cv2.waitKey(0)

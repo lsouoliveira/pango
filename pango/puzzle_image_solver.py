@@ -1,8 +1,11 @@
 import cv2
 from cv2.typing import MatLike
 
-from pango.cell_images_extractor import CellImagesExtractor
-from pango.puzzle_image_finder import ExtractedPuzzleImageResult, PuzzleImageFinder
+from pango.image_processing.cell_images_extractor import CellImagesExtractor
+from pango.image_processing.puzzle_image_finder import (
+    ExtractedPuzzleImageResult,
+    PuzzleImageFinder,
+)
 
 
 class PuzzleImageSolverPipeline:

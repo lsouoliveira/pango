@@ -5,8 +5,8 @@ import uuid
 
 from cv2.typing import MatLike
 
-from pango.cell_images_extractor import CellImagesExtractor
-from pango.puzzle_image_finder import PuzzleImageFinder
+from pango.image_processing.cell_images_extractor import CellImagesExtractor
+from pango.image_processing.puzzle_image_finder import PuzzleImageFinder
 
 IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"]
 

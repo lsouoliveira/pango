@@ -1,6 +1,7 @@
 import cv2
 from cv2.typing import MatLike
 
+from pango.cell_images_extractor import CellImagesExtractor
 from pango.puzzle_image_finder import ExtractedPuzzleImageResult, PuzzleImageFinder
 
 
@@ -11,6 +12,7 @@ class PuzzleImageSolverPipeline:
 
     def run(self):
         result = self.extract_puzzle_image(self.image)
+        cell_images = self.extract_cell_images(result.enhanced)
 
         self.output_image = result.image
 
@@ -18,6 +20,11 @@ class PuzzleImageSolverPipeline:
         puzzle_finder = PuzzleImageFinder(image)
 
         return puzzle_finder.find()
+
+    def extract_cell_images(self, puzzle_image: MatLike) -> list[MatLike]:
+        extractor = CellImagesExtractor(puzzle_image)
+
+        return extractor.extract()
 
     @staticmethod
     def load_image(image_path: str) -> "PuzzleImageSolverPipeline":

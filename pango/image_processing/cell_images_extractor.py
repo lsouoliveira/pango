@@ -1,7 +1,9 @@
+import cv2
 from cv2.typing import MatLike
-from skimage.segmentation import clear_border
 
-PADDING_RATIO = 0.1
+from pango.image_processing.image_normalizer import ImageNormalizer
+
+PADDING_RATIO = 0.2
 
 
 class CellImagesExtractor:
@@ -19,12 +21,18 @@ class CellImagesExtractor:
                 x, y, w, h = j * cell_width, i * cell_height, cell_width, cell_height
 
                 cell = self.input[y : y + h, x : x + w]
-                cell = clear_border(cell)
 
                 padding = int(min(w, h) * PADDING_RATIO)
 
                 cell = cell[padding : h - padding, padding : w - padding]
 
                 cells.append(cell)
+
+        cells = [ImageNormalizer(cell).normalize() for cell in cells]
+
+        for cell in cells:
+            cv2.imshow("Cell", cell)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
         return cells

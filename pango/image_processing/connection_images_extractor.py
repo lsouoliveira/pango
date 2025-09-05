@@ -1,6 +1,8 @@
 from cv2.typing import MatLike
 from skimage.segmentation import clear_border
 
+from pango.image_processing.image_normalizer import ImageNormalizer
+
 CONNECTION_WIDTH = 40
 CONNECTION_PADDING_RATIO = 0.25
 
@@ -27,9 +29,10 @@ class ConnectionImagesExtractor:
 
                 padding = int(h * CONNECTION_PADDING_RATIO)
                 connection = self.input[y + padding : y + h - padding, x : x + w]
-                connection = clear_border(connection)
 
                 connections.append(connection)
+
+        connections = [ImageNormalizer(conn).normalize() for conn in connections]
 
         return connections
 
@@ -47,5 +50,7 @@ class ConnectionImagesExtractor:
                 connection = self.input[y : y + h, x + padding : x + w - padding]
 
                 connections.append(connection)
+
+        connections = [ImageNormalizer(conn).normalize() for conn in connections]
 
         return connections

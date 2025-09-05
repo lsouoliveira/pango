@@ -76,18 +76,17 @@ class PuzzleImageSolverPipeline:
     def run(self):
         result = self.extract_puzzle_image(self.image)
 
-        cell_images = self.extract_cell_images(result.enhanced)
-        shapes = self.classify_shapes(cell_images)
-        connection_images = self._extract_connection_images(result.enhanced)
-        connections = self.classify_connections(connection_images)
-        puzzle = self.build_puzzle(shapes, connections)
+        cell_images = self.extract_cell_images(result.image)
+        connection_images = self._extract_connection_images(result.image)
 
-        if not puzzle.is_valid():
-            raise InvalidPuzzle()
-
-        puzzle.solve()
-
-        return (result.image, puzzle)
+        # puzzle = self.build_puzzle(shapes, connections)
+        #
+        # if not puzzle.is_valid():
+        #     raise InvalidPuzzle()
+        #
+        # puzzle.solve()
+        #
+        # return (result.image, puzzle)
 
     def extract_puzzle_image(self, image: MatLike) -> ExtractedPuzzleImageResult:
         puzzle_finder = PuzzleImageFinder(image)
@@ -99,42 +98,12 @@ class PuzzleImageSolverPipeline:
 
         return extractor.extract()
 
-    def classify_shapes(self, cell_images: list[MatLike]) -> list[Shape]:
-        shapes = []
-
-        for cell_image in cell_images:
-            classifier = ShapeClassifier(cell_image)
-            shape = classifier.classify()
-            shapes.append(shape)
-
-        return shapes
-
     def _extract_connection_images(
         self, puzzle_image: MatLike
     ) -> tuple[list[MatLike], list[MatLike]]:
         extractor = ConnectionImagesExtractor(puzzle_image)
 
         return extractor.extract()
-
-    def classify_connections(
-        self, connection_images: tuple[list[MatLike], list[MatLike]]
-    ) -> tuple[list[ConnectionSymbol], list[ConnectionSymbol]]:
-        vertical_connections = []
-        horizontal_connections = []
-
-        for connection_image in connection_images[0]:
-            classifier = ConnectionClassifier(connection_image)
-            shape = classifier.classify()
-
-            vertical_connections.append(shape)
-
-        for connection_image in connection_images[1]:
-            classifier = ConnectionClassifier(connection_image)
-            shape = classifier.classify()
-
-            horizontal_connections.append(shape)
-
-        return (vertical_connections, horizontal_connections)
 
     def build_puzzle(
         self,

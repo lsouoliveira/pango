@@ -1,6 +1,8 @@
 from cv2.typing import MatLike
 from skimage.segmentation import clear_border
 
+PADDING_RATIO = 0.1
+
 
 class CellImagesExtractor:
     def __init__(self, input: MatLike):
@@ -18,6 +20,10 @@ class CellImagesExtractor:
 
                 cell = self.input[y : y + h, x : x + w]
                 cell = clear_border(cell)
+
+                padding = int(min(w, h) * PADDING_RATIO)
+
+                cell = cell[padding : h - padding, padding : w - padding]
 
                 cells.append(cell)
 

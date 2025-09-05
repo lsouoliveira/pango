@@ -4,6 +4,7 @@ from cv2.typing import MatLike
 from imutils.perspective import four_point_transform
 from skimage.segmentation import clear_border
 from dataclasses import dataclass
+import math
 
 THRESHOLD_BLOCK_SIZE = 11
 THRESHOLD_C = 2
@@ -47,6 +48,8 @@ class PuzzleImageFinder:
         if puzzle_contour is None:
             raise NoPuzzleFoundError()
 
+        self._validate_grid(output, puzzle_contour)
+
         return ExtractedPuzzleImageResult(
             image=self._cut_puzzle(self.image, puzzle_contour),
             enhanced=self._cut_puzzle(output, puzzle_contour),
@@ -55,9 +58,8 @@ class PuzzleImageFinder:
 
     def _enhance_image(self, image: MatLike) -> MatLike:
         gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        blurred_image = cv2.GaussianBlur(gray_image, (7, 7), 3)
         threshold_image = cv2.adaptiveThreshold(
-            blurred_image,
+            gray_image,
             255,
             cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY,
@@ -69,24 +71,37 @@ class PuzzleImageFinder:
         return threshold_image
 
     def _find_contours(self, image: MatLike) -> list[MatLike]:
-        contours, _ = cv2.findContours(
-            image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-        )
+        contours, _ = cv2.findContours(image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         contours = sorted(contours, key=cv2.contourArea, reverse=True)
-        contours = [c for c in contours if cv2.contourArea(c) > MINIMUM_CONTOUR_AREA]
 
         return contours
 
     def _find_puzzle_contour(self, contours: list[MatLike]) -> Optional[MatLike]:
         for contour in contours:
             perimeter = cv2.arcLength(contour, True)
-            approximation = cv2.approxPolyDP(contour, 0.02 * perimeter, True)
-
-            if perimeter < 100:
-                continue
+            approximation = cv2.approxPolyDP(contour, 0.005 * perimeter, True)
 
             if len(approximation) == 4:
                 return approximation
+
+    def _validate_grid(self, image: MatLike, contour: MatLike):
+        puzzle_image = clear_border(self._cut_puzzle(image, contour))
+
+        vertical_lines = 0
+        horizontal_lines = 0
+
+        edges = cv2.Canny(puzzle_image, 50, 150, apertureSize=3)
+        lines = cv2.HoughLines(edges, 1, math.pi / 180, 100)
+
+        if lines is not None:
+            for _, theta in lines[:, 0]:
+                if theta < math.pi / 4 or theta > 3 * math.pi / 4:
+                    vertical_lines += 1
+                else:
+                    horizontal_lines += 1
+
+        if vertical_lines < 5 or horizontal_lines < 5:
+            raise NoPuzzleFoundError()
 
     def _cut_puzzle(self, image: MatLike, contour: MatLike) -> MatLike:
         return four_point_transform(image, contour.reshape(4, 2))

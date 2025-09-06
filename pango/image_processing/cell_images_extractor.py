@@ -30,9 +30,4 @@ class CellImagesExtractor:
 
         cells = [ImageNormalizer(cell).normalize() for cell in cells]
 
-        for cell in cells:
-            cv2.imshow("Cell", cell)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-
         return cells

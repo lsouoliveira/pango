@@ -2,11 +2,9 @@ import torch
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
-from sklearn.model_selection import train_test_split
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import torch.nn as nn
-import numpy as np
 
 from .dataset import CustomDataset
 from .model import Model
@@ -16,62 +14,11 @@ IMAGE_SIZE = 64
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def print_labels_count(dataset):
-    print(dataset["label"].value_counts())
-
-
-def show_example_images(dataset, cols=5, rows=3):
-    _, axes = plt.subplots(rows, cols, figsize=(cols * 2, rows * 2))
-    selected_indices = random.sample(range(len(dataset)), cols * rows)
-
-    X = dataset.drop(columns=["label"])
-
-    for ax, idx in zip(axes.flatten(), selected_indices):
-        image_data = X.iloc[idx].values.reshape(IMAGE_SIZE, IMAGE_SIZE)
-        label = dataset.iloc[idx]["label"]
-
-        ax.imshow(image_data, cmap="gray")
-        ax.set_title(f"Label: {label}")
-        ax.axis("off")
-
-    plt.tight_layout()
-    plt.show()
-
-
-def show_distribution_of_labels(dataset):
-    label_counts = dataset["label"].value_counts()
-    label_counts.plot(kind="bar", figsize=(10, 6))
-    plt.xlabel("Labels")
-    plt.ylabel("Count")
-    plt.title("Distribution of Labels")
-    plt.show()
-
-
-def show_data_analysis(data):
-    print_labels_count(data)
-    show_example_images(data)
-    show_distribution_of_labels(data)
-
-
-def drop_classes_with_few_samples(data, min_samples=2):
-    counts = data["label"].value_counts()
-    to_keep = counts[counts >= min_samples].index
-    filtered_data = data[data["label"].isin(to_keep)].reset_index(drop=True)
-
-    return filtered_data
-
-
-def apply_data_augmentation(X, Y):
-    return X, Y
-
-
-def main():
+def train():
     data = pd.read_csv("dataset.csv")
     data = drop_classes_with_few_samples(data, min_samples=2)
 
-    train, test = train_test_split(data, test_size=0.1, random_state=42)
-
-    show_data_analysis(train)
+    show_data_analysis(data)
 
     train_transform = transforms.Compose(
         [
@@ -81,7 +28,7 @@ def main():
         ]
     )
 
-    train_dataset = CustomDataset(train, transform=train_transform)
+    train_dataset = CustomDataset(data, transform=train_transform)
     train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 
     imgs, lbls = next(iter(train_loader))
@@ -103,7 +50,7 @@ def main():
 
     print(model)
 
-    epochs = 100
+    epochs = 10
     train_losses = []
     train_accuracies = []
 
@@ -160,18 +107,57 @@ def main():
 
     plt.show()
 
-    model.eval()
+    print("Saving model to file model.pth...")
 
-    x_test = test.drop(columns=["label"])
-    x_test = x_test.values.reshape(-1, 1, IMAGE_SIZE, IMAGE_SIZE).astype(np.float32)
-    x_test = torch.from_numpy(x_test).to(device)
+    torch.save(model.state_dict(), "model.pth")
 
-    with torch.no_grad():
-        ps = model(x_test)
-        prediction = torch.argmax(ps, 1)
+    print("Model saved.")
 
-        print(f"Predictions: {prediction}")
+
+def print_labels_count(dataset):
+    print(dataset["label"].value_counts())
+
+
+def show_example_images(dataset, cols=5, rows=3):
+    _, axes = plt.subplots(rows, cols, figsize=(cols * 2, rows * 2))
+    selected_indices = random.sample(range(len(dataset)), cols * rows)
+
+    X = dataset.drop(columns=["label"])
+
+    for ax, idx in zip(axes.flatten(), selected_indices):
+        image_data = X.iloc[idx].values.reshape(IMAGE_SIZE, IMAGE_SIZE)
+        label = dataset.iloc[idx]["label"]
+
+        ax.imshow(image_data, cmap="gray")
+        ax.set_title(f"Label: {label}")
+        ax.axis("off")
+
+    plt.tight_layout()
+    plt.show()
+
+
+def show_distribution_of_labels(dataset):
+    label_counts = dataset["label"].value_counts()
+    label_counts.plot(kind="bar", figsize=(10, 6))
+    plt.xlabel("Labels")
+    plt.ylabel("Count")
+    plt.title("Distribution of Labels")
+    plt.show()
+
+
+def show_data_analysis(data):
+    print_labels_count(data)
+    show_example_images(data)
+    show_distribution_of_labels(data)
+
+
+def drop_classes_with_few_samples(data, min_samples=2):
+    counts = data["label"].value_counts()
+    to_keep = counts[counts >= min_samples].index
+    filtered_data = data[data["label"].isin(to_keep)].reset_index(drop=True)
+
+    return filtered_data
 
 
 if __name__ == "__main__":
-    main()
+    train()

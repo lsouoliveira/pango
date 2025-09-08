@@ -5,6 +5,7 @@ import random
 from torch.utils.data import DataLoader
 from torchvision import transforms
 import torch.nn as nn
+import argparse
 
 from .dataset import CustomDataset
 from .model import Model
@@ -14,8 +15,27 @@ IMAGE_SIZE = 64
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
-def train():
-    data = pd.read_csv("dataset.csv")
+def parse_args():
+    parser = argparse.ArgumentParser(description="Train a model.")
+
+    parser.add_argument(
+        "--epochs", type=int, default=100, help="Number of training epochs"
+    )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        help="Path to the dataset CSV file",
+        required=True,
+    )
+    parser.add_argument(
+        "--output", type=str, default="model.pth", help="Path to save the trained model"
+    )
+
+    return parser.parse_args()
+
+
+def train(args):
+    data = pd.read_csv(args.dataset)
     data = drop_classes_with_few_samples(data, min_samples=2)
 
     show_data_analysis(data)
@@ -50,7 +70,7 @@ def train():
 
     print(model)
 
-    epochs = 10
+    epochs = args.epochs
     train_losses = []
     train_accuracies = []
 
@@ -109,7 +129,7 @@ def train():
 
     print("Saving model to file model.pth...")
 
-    torch.save(model.state_dict(), "model.pth")
+    torch.save(model.state_dict(), args.output)
 
     print("Model saved.")
 
@@ -160,4 +180,6 @@ def drop_classes_with_few_samples(data, min_samples=2):
 
 
 if __name__ == "__main__":
-    train()
+    args = parse_args()
+
+    train(args)
